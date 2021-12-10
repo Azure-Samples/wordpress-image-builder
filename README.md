@@ -1,57 +1,120 @@
-# Project Name
+---
+page_type: sample
+languages: 
+- azcli
+products: 
+- virtual-machines
+- azure
+- image-builder
+name: Create a Wordpress image for an Azure Virtual Machine image using Azure Image Builder
+author: lanicolas
+---
 
-(short, 1-3 sentenced, description of the project)
+# Create a Wordpress image for an Azure Virtual Machine image using Azure Image Builder
+
+[Azure Image Builder](https://docs.microsoft.com/en-us/azure/virtual-machines/image-builder-overview) is an Azure service that allows you to create predefined images with the required settings and software that meets your corporate standards, all of this being done in an automated approach that guarantees consistency and allows you to version version your images while managing them as code.
+
+When building images with Azure Image Builder you will start with a Linux or Windows base image on top of which you will add your customizations as-code. The solution is based on [HashiCorp Packer](https://www.packer.io/) but being a managed service in Azure.
+
+This service allows you to provide some contents and scripts to automate the Virtual Machine configuration and will perform all the necessary steps to generate, generalize and publish your virtual machine image.
+
+Once you have an image ready you can publish it in the [Azure Shared Image Gallery](https://docs.microsoft.com/en-us/azure/virtual-machines/shared-image-galleries) or use it as a [managed image in VHD](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/capture-image) that you can later use as part of your automation.
+
+The sample provides:
+
+- A script to take care of all of the prerequisites to use Azure image builder:
+  - Azure provider registrations
+  - Resource Group creation
+  - User-assigned identity and permissions.
+  - Image definition and gallery settings
+- A template used to configure the image, this file will:
+  - Define the base image to use and VM profile, in this case it will use Ubuntu 18.04 on a Standard_D1_v2 VM.
+  - Include the customization script and the commands to run it. In this sample the script will install Wordpress
+  - Image Gallery configuration
 
 ## Features
 
-This project framework provides the following features:
+The sample provides:
 
-* Feature 1
-* Feature 2
-* ...
+- A script to take care of all of the prerequisites to use Azure image builder:
+  - Azure provider registrations
+  - Resource Group creation
+  - User-assigned identity and permissions.
+  - Image definition and gallery settings
+- A template used to configure the image, this file will:
+  - Define the base image to use and VM profile, in this case it will use Ubuntu 18.04 on a Standard_D1_v2 VM.
+  - Include the customization script and the commands to run it. In this sample the script will install Wordpress
+  - Image Gallery configuration
 
 ## Getting Started
 
 ### Prerequisites
 
-(ideally very short, if any)
+Download the [image builder script](./scripts/image-builder.sh) and edit the environment variable section to match your deployment, provide inputs for the variables as follows:
 
-- OS
-- Library version
-- ...
+| Variable | Description | Example |
+|---|---|---|
+| rg_name | Resource group name | image_builder_rg |
+| location | Main Azure Datacenter location | westeurope |
+| replicated_location | Additional region to replicate the image to | northeurope |
+| image_gallery | Azure Compute Image Gallery nameame of the image definition to be created  | ib_gallery |
+| image_def_name | Name of the image definition | ib_imagedef |
+| image_metadata | Name for the image distribution metadata reference | ib_premium |
+| subscription_id | Subscription ID of the RG you will use | xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx |
+| publisher | Name of the company or person that will publish the image | ib_publishing |
+| sku | Define a SKU for your image | premium |
+| offer | Image offer | ib_offer |
 
 ### Installation
 
-(ideally very short)
+Follow these steps to deploy the sample:
 
-- npm install [package name]
-- mvn install
-- ...
+- Sign in with Azure CLI
 
-### Quickstart
-(Add steps to get up and running quickly)
+```shell
+az login
+```
 
-1. git clone [repository clone url]
-2. cd [respository name]
-3. ...
+- Run the [image builder script](./scripts/image-builder.sh)
 
+```shell
+. ./image-builder.sh
+```
 
-## Demo
+### Testing
 
-A demo app is included to show how to use the project.
+After the script has finished its run, test the image by creating a VM.
 
-To run the demo, follow these steps:
+```shell
+az network nsg create -g $rg_name -n wordpressnsg
+az network nsg rule create \
+  --resource-group $rg_name \
+  --nsg-name wordpressnsg \
+  --name allow-http \
+  --protocol tcp \
+  --priority 100 \
+  --destination-port-range 80 \
+  --access Allow
+az vm create \
+  --resource-group $rg_name \
+  --name wordpressvm \
+  --admin-username aibuser \
+  --location $location \
+  --image "/subscriptions/$subscription_id/resourceGroups/$rg_name/providers/Microsoft.Compute/galleries/$image_gallery/images/$image_def_name/versions/latest" \
+  --generate-ssh-keys \
+  --nsg wordpressnsg
+```
 
-(Add steps to start up the demo)
+Get the public IP address of the VM by running:
 
-1.
-2.
-3.
+```shell
+az vm list-ip-addresses -n wordpressvm --query [0].virtualMachine.network.publicIpAddresses[0].ipAddress -o tsv
+```
 
-## Resources
+Access the IP address via a web browser and Wordpress should be deployed.
 
-(Any additional resources or related projects)
+## Additional resources
 
-- Link to supporting information
-- Link to similar sample
-- ...
+- [Azure Shared Image Gallery CLI.](https://docs.microsoft.com/en-us/cli/azure/service-page/azure%20shared%20image%20gallery?view=azure-cli-latest)
+- [Building a Linux VM image using Azure Image Builder](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/image-builder)
+- [Image Builder template reference.](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/image-builder-json#properties-customize)
