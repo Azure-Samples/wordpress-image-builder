@@ -19,18 +19,6 @@ This service allows you to provide some contents and scripts to automate the Vir
 
 Once you have an image ready you can publish it in the [Azure Shared Image Gallery](https://docs.microsoft.com/en-us/azure/virtual-machines/shared-image-galleries) or use it as a [managed image in VHD](https://docs.microsoft.com/en-us/azure/virtual-machines/linux/capture-image) that you can later use as part of your automation.
 
-The sample provides:
-
-- A script to take care of all of the prerequisites to use Azure image builder:
-  - Azure provider registrations
-  - Resource Group creation
-  - User-assigned identity and permissions.
-  - Image definition and gallery settings
-- A template used to configure the image, this file will:
-  - Define the base image to use and VM profile, in this case it will use Ubuntu 18.04 on a Standard_D1_v2 VM.
-  - Include the customization script and the commands to run it. In this sample the script will install Wordpress
-  - Image Gallery configuration
-
 ## Features
 
 The sample provides:
