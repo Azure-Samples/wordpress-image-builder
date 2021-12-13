@@ -1,13 +1,12 @@
 ---
 page_type: sample
 languages: 
-- azcli
+- azurecli
 products: 
 - virtual-machines
 - azure
 - image-builder
 name: Create a Wordpress image for an Azure Virtual Machine image using Azure Image Builder
-author: lanicolas
 ---
 
 # Create a Wordpress image for an Azure Virtual Machine image using Azure Image Builder
