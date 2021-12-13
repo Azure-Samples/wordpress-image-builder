@@ -1,7 +1,7 @@
 ---
 page_type: sample
 languages: 
-- azcli
+- azurecli
 products: 
 - virtual-machines
 - azure
